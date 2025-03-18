@@ -19,4 +19,31 @@ router.post("/register", async(req, res, next) => {
   }
 });
 
+router.post("/email/verify", async(req, res, next) => {
+  try {
+
+   const result = await userController.verifyEmail(req.body)
+  res.json({data : "User verified successfully"})
+} catch (error) {
+    next(error);
+  }
+});
+
+
+
+router.post("/email/resend", async(req, res, next) => {
+  try {
+
+   const result = await userController.resendEmailOtp(req.body)
+  res.json({data : "OTP resent  successfully"})
+} catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+
+
 module.exports = router;

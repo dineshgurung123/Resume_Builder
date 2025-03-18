@@ -1,22 +1,91 @@
 const userModel = require("./user.model");
 const { generateHash } = require("../../utils/bcrypt");
+const {mailEvents} = require('../../services/mailer')
+const {generateOTP} = require("../../utils/token")
 
 const {sendEmail} = require("../../services/mailer")
- const login = async (email, password) => {};
+ 
+
+const login = async (payload) => {
+
+
+
+};
 
 const register = async (payload) => {
   const { password, ...rest } = payload;
 
   const existingUser = await userModel.findOne({ email: rest?.email });
-  rest.password = generateHash(password);
+  
   if (existingUser) throw new Error("Email already exists");
-   const newUser =  userModel.create(rest);
+  rest.password = generateHash(password);
+  rest.otp = generateOTP()
+  const newUser =  await userModel.create(rest);
 
 
    if(newUser){
-    await sendEmail({to : rest?.email, subject: "Welcome to Proresume AI", message : "Thank you for signing up"} )
+   
+  mailEvents.emit(
+    "sendEmail",
+     rest?.email,
+    "Welcome to Proresume AI", 
+     `Thank you for signing up. 
+     please use this code ${rest.otp}to verify your email`
+    )
 
    }
 };
 
-module.exports = { login, register };
+
+const verifyEmail = async(payload) => {
+  
+  const {email, otp} = payload
+  if(otp.length !== 6) throw new Error("OTP must be 6 digits")
+
+  const user = await userModel.findOne({email, isEmailVerified : false})
+  if(!user) throw new Error ("User not found")
+
+    const isValidOTP =  user.otp ===  String(otp)
+
+    if(!isValidOTP) throw new Error ("OTP mismatch")
+
+     const userUpdate = await userModel.updateOne({email}, {isEmailVerified: true, otp: ""}) 
+
+        if(userUpdate){
+          return mailEvents.emit(
+            "sendEmail",
+             email,
+            "Email verified successfully", 
+             `Thank you for verifying your Email `
+           
+            )
+        }
+   
+}
+
+const resendEmailOtp = async(payload) => {
+  
+  const {email} = payload
+ 
+  const user = await userModel.findOne({email, isEmailVerified : false})
+  if(!user) throw new Error ("User not found")
+      
+    const otp = generateOTP()
+     const userUpdate = await userModel.updateOne({email}, {otp }) 
+
+        if(userUpdate){
+          return mailEvents.emit(
+            "sendEmail",
+             email,
+            `Your OTP code for email verification is ${otp}`, 
+             `please use this ${otp} code for verification  `
+           
+            )
+        }
+   
+}
+
+
+
+
+module.exports = { login, register , verifyEmail , resendEmailOtp};

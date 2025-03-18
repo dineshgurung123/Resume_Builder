@@ -1,5 +1,7 @@
 const nodemailer = require ('nodemailer')
+const events = require ('events')
 
+const mailEvents = new events.EventEmitter()
 
 const transporter = nodemailer.createTransport({
 
@@ -24,7 +26,7 @@ transporter.verify(function (error, success) {
 const sendEmail = async({to, subject, message}) => {
 
   return await transporter.sendMail({
-        from: '"ProResumeAi" <no-reply@proresune.ai>', // sender address
+        from: '"ProResumeAi" <no-reply@proresume.ai>', // sender address
         to, // list of receivers
         subject, // Subject line
         html: message, // html body
@@ -32,4 +34,10 @@ const sendEmail = async({to, subject, message}) => {
 
 }
 
-module.exports = {sendEmail}
+mailEvents.on("sendEmail",  async(to, subject, message)=>{
+   
+  await sendEmail({to, subject, message})
+
+})
+
+module.exports = {sendEmail, mailEvents}
