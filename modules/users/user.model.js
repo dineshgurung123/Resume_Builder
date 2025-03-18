@@ -11,6 +11,7 @@ const userSchema = new Schema({
     isBlocked : {type : Boolean, required : true, default : false},
     isEmailVerified : {type : Boolean, required : true, default : false  },
     otp : {type : String},
+    refresh_token : {type : String},
     roles : {type : [String] , enum : ["admin", "user"], default : "user"}
 
 }, 

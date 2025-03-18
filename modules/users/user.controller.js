@@ -1,15 +1,33 @@
 const userModel = require("./user.model");
-const { generateHash } = require("../../utils/bcrypt");
+const { generateHash, compareHash } = require("../../utils/bcrypt");
 const {mailEvents} = require('../../services/mailer')
-const {generateOTP} = require("../../utils/token")
+const {generateOTP, signJWT, generateRandomToken} = require("../../utils/token")
 
 const {sendEmail} = require("../../services/mailer")
  
 
 const login = async (payload) => {
 
+  const {email, password} = payload
+  
+  const user = await userModel.findOne({email})
+  if(!user) throw new Error ("User not found")
+ 
+   if(user?.isBlocked) throw new Error ("User is blocked, Contact Admin for support")
+ 
+     if(user?.isEmailVerified) throw new Error("Email verification pending")
+      
+     const isValidPassword = await compareHash(user?.password, password)
+     if(!isValidPassword) throw new Error ("Email or password mismatch")
 
+     const data = {
+      name : user?.name,
+      email : user?.email
+     }
 
+      const rt = generateRandomToken()
+      await userModel.updateOne({email : user?.email}, {refresh_token: rt})
+     return {access_token : signJWT(data), refresh_token :  rt, data : "User logged in successfully"} 
 };
 
 const register = async (payload) => {
