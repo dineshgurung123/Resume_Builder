@@ -12,10 +12,10 @@ process.env.JWT_SECRET,
 {expiresIn : process.env.JWT_DURATION}
 )
 
-const verifyJWT = () =>{}
+const verifyJWT = (token) => JWT.verify(token, process.env.JWT_SECRET)
 
 
 const generateRandomToken = () => uuidv4()
 
 
-module.exports = {generateOTP, signJWT, generateRandomToken}
+module.exports = {generateOTP, signJWT, generateRandomToken, verifyJWT}
