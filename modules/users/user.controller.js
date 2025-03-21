@@ -138,4 +138,77 @@ return {access_token : signJWT(data)}
 }
 
 
-module.exports = { login, register, verifyEmail, resendEmailOtp , refresh};
+const fpTokenGeneration = async(payload) =>{
+
+  const {email} = payload
+
+  const user = await userModel.findOne({email, isEmailVerified : true, isBlocked: false})
+  
+  if(!user) throw new Error("User not found")
+   const fpToken = generateOTP()
+ const updatedUser =  await userModel.updateOne({email}, {otp : fpToken})
+
+ if (updatedUser) {
+  mailEvents.emit(
+    "sendEmail",
+    email,
+    "Forget Password",
+    `
+   tour forget password  code ${fpToken}`
+  );
+
+}
+}
+
+const fpTokenVerification= async(payload) =>{
+
+  const {email, token, password} = payload
+  const user = await userModel.findOne({email, isEmailVerified: true, isBlocked: false})
+   
+  if(!user) throw new Error("User not found")
+
+    const isValidToken = token === user?.otp
+     
+    if(!isValidToken) throw new Error ("Token mismatch")
+
+      const newPassword = generateHash(password)
+      const updatedUser = await userModel.updateOne({email}, {password: newPassword, otp: ""})
+         
+ if (updatedUser?.acknowledged) {
+  mailEvents.emit(
+    "sendEmail",
+    email,
+    "Password changed",
+    `Your password changed successfully`
+  );
+
+}
+}
+
+
+
+const resetPassword = async({email, password}) =>{
+  console.log({email, password})
+  const user = await userModel.findOne({email, isEmailVerified: true, isBlocked: false})
+   
+  if(!user) throw new Error("User not found")
+
+      const newPassword = generateHash(password)
+      const updatedUser = await userModel.updateOne({email}, {password: newPassword})
+         
+ if (updatedUser?.acknowledged) {
+  mailEvents.emit(
+    "sendEmail",
+    email,
+    "Password reset Successfully",
+    `Your password changed successfully . Your new password is ${password}`
+  );
+
+}
+}
+
+
+
+
+
+module.exports = {fpTokenGeneration, fpTokenVerification, login, register,resetPassword, verifyEmail, resendEmailOtp , refresh};
