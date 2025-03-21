@@ -87,17 +87,47 @@ router.post("/forget-password/verify", async (req, res, next) => {
 //profile
 //profile update
 
-router.post("/reset-password", secureAPI(["admin"]),  async (req, res, next) => {
+
+router.post("/change-password", secureAPI(["admin", "user"]),  async (req, res, next) => {
   try {
        
-       await userController.resetPassword(req.body)    
+    await userController.changePassword( req.currentUser ,req.body)    
     res.json({
-      data: "password reset duccessfully",
+      data: "password changed successfully",
     });
   } catch (error) {
     next(error);
   }
 })
+
+
+
+router.post("/reset-password", secureAPI(["admin"]),  async (req, res, next) => {
+  try {
+       
+       await userController.resetPassword(req.body)    
+    res.json({
+      data: "password reset successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+})
+
+
+router.get("/profile", secureAPI(["admin", "user"]),  async (req, res, next) => {
+  try {
+       
+     const result =  await userController.getProfile(req.currentUser)    
+    res.json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+})
+
+
 
 // router.patch("/block/:id", secureAPI(["admin"]), async (req, res, next) => {
 //   try {

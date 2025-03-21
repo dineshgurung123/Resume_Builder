@@ -7,8 +7,37 @@ const {
   generateRandomToken,
 } = require("../../utils/token");
 const { generateRTDuration } = require("../../utils/date");
-
+const {generatePassword} = require("../../utils/textUtils")
 const { sendEmail } = require("../../services/mailer");
+
+
+
+const changePassword = async( currentUser, payload) =>{
+  
+  const {oldPassword, password} = payload
+
+  const user = await userModel.findOne({
+    _id: currentUser
+    ,
+     isEmailVerified: true, isBlocked: false})
+   
+  if(!user) throw new Error("User not found")
+  const isValidOldPw = compareHash(user?.password, oldPassword)
+   if(!isValidOldPw) throw new Error("password did not match")    
+  const newPassword = generateHash(password)
+      const updatedUser = await userModel.updateOne({_id: currentUser}, {password: newPassword})
+         
+ if (updatedUser?.acknowledged) {
+  mailEvents.emit(
+    "sendEmail",
+    user?.email,
+    "Password changes Successfully",
+    `Your password changed successfully .`
+  );
+
+}
+}
+
 
 const login = async (payload) => {
   const { email, password } = payload;
@@ -187,12 +216,12 @@ const fpTokenVerification= async(payload) =>{
 
 
 
-const resetPassword = async({email, password}) =>{
-  console.log({email, password})
+const resetPassword = async({email}) =>{
+  console.log({email})
   const user = await userModel.findOne({email, isEmailVerified: true, isBlocked: false})
    
-  if(!user) throw new Error("User not found")
-
+      if(!user) throw new Error("User not found")
+      const password = generatePassword()
       const newPassword = generateHash(password)
       const updatedUser = await userModel.updateOne({email}, {password: newPassword})
          
@@ -207,8 +236,8 @@ const resetPassword = async({email, password}) =>{
 }
 }
 
+const getProfile = async(currentUser)=>userModel.findOne({_id: currentUser}).select("-password -refresh_token")
 
 
 
-
-module.exports = {fpTokenGeneration, fpTokenVerification, login, register,resetPassword, verifyEmail, resendEmailOtp , refresh};
+module.exports = {changePassword, fpTokenGeneration, fpTokenVerification, getProfile,login, register,resetPassword, verifyEmail, resendEmailOtp , refresh};
