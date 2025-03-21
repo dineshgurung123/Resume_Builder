@@ -238,6 +238,21 @@ const resetPassword = async({email}) =>{
 
 const getProfile = async(currentUser)=>userModel.findOne({_id: currentUser}).select("-password -refresh_token")
 
+const updateProfile = async(currentUser, payload) =>{
+ 
+  const user = await userModel.findOne({_id: currentUser, isEmailVerified: true, isBlocked: false})
+   
+  if(!user) throw new Error("User not found")
+ 
+    const newPayload = {name : payload?.name}
+    
+    const updatedUser = await userModel.findOneAndUpdate({_id: currentUser}, newPayload, {
+      new:true
+    })
+     return {name: updatedUser?.name}
+  }
+
+  const list = (page = 1, limit = 10, search) =>{}
 
 
-module.exports = {changePassword, fpTokenGeneration, fpTokenVerification, getProfile,login, register,resetPassword, verifyEmail, resendEmailOtp , refresh};
+module.exports = {changePassword, fpTokenGeneration, fpTokenVerification, getProfile,login, register,resetPassword, verifyEmail, resendEmailOtp , refresh, updateProfile , list};

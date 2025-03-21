@@ -128,13 +128,66 @@ router.get("/profile", secureAPI(["admin", "user"]),  async (req, res, next) => 
 })
 
 
+router.put("/profile", secureAPI(["admin", "user"]),  async (req, res, next) => {
+  try {
+       
+     const result =  await userController.updateProfile(req.currentUser, req.body)    
+    res.json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+})
 
-// router.patch("/block/:id", secureAPI(["admin"]), async (req, res, next) => {
-//   try {
-//     res.json({ data: "i am admin route, and i need admin role to access" });
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+
+//ADMIN SECTIONS
+
+router.get("/", secureAPI(["admin"]), async (req, res, next) => {
+  try {
+    const {page, limit, name} = req.query
+    const search = {name}
+    const result = await userController.list({page , limit, search})
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.post("/", secureAPI(["admin"]), async (req, res, next) => {
+  try {
+    res.json({ data: "i am admin route, and i need admin role to access" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.get("/:id", secureAPI(["admin"]), async (req, res, next) => {
+  try {
+    res.json({ data: "i am admin route, and i need admin role to access" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+router.put("/:id", secureAPI(["admin"]), async (req, res, next) => {
+  try {
+    res.json({ data: "i am admin route, and i need admin role to access" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/block/:id", secureAPI(["admin"]), async (req, res, next) => {
+  try {
+    res.json({ data: "i am admin route, and i need admin role to access" });
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;
