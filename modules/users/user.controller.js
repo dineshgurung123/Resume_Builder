@@ -252,7 +252,67 @@ const updateProfile = async(currentUser, payload) =>{
      return {name: updatedUser?.name}
   }
 
-  const list = (page = 1, limit = 10, search) =>{}
+
+
+  const list = async({page = 1, limit = 1, search}) =>{
+   
+    const query = [];
+    
+      if(search ?.name){
+       query.push({
+        '$match': {
+          'name': new RegExp(search?.name, 'gi')
+        }
+      })
+
+      }
+      
+      query.push(
+         {
+          $project: {
+            'password': 0
+          }
+        }, {
+          $facet: {
+            metadata: [
+              {
+                $count: 'total'
+              }
+            ], 
+            data: [
+              {
+                $skip: (page - 1) *  +limit
+              }, {
+                $limit: +limit
+              }
+            ]
+          }
+        }, {
+          $addFields: {
+            total: {
+              $arrayElemAt: [
+                '$metadata.total', 0
+              ]
+            }
+          }
+        }, {
+          $project: {
+            metadata: 0
+          }
+        }
+      )
+
+
+    const result = await userModel.aggregate(query)
+    console.log(result)
+    return {
+    data: result[0].data,
+    total : result[0].total || 0,
+    page : +page,
+     limit : +limit
+    }
+    
+  }
 
 
 module.exports = {changePassword, fpTokenGeneration, fpTokenVerification, getProfile,login, register,resetPassword, verifyEmail, resendEmailOtp , refresh, updateProfile , list};
